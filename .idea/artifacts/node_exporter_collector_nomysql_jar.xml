@@ -1,0 +1,17 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="node_exporter_collector_nomysql:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/node_exporter_collector_nomysql_jar</output-path>
+    <root id="archive" name="node_exporter_collector_nomysql.jar">
+      <element id="module-output" name="node_exporter_collector_nomysql" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/nomysql/jmeter_plugin/lib/mysql-connector-java-5.1.30.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/nomysql/jmeter_plugin/lib/log4j-core-2.11.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/nomysql/jmeter_plugin/lib/mysql-connector-j-9.1.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/nomysql/jmeter_plugin/lib/log4j-slf4j-impl-2.11.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/nomysql/jmeter_plugin/lib/slf4j-api-1.7.25.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/nomysql/jmeter_plugin/lib/log4j-api-2.11.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/nomysql/jmeter_plugin/lib/log4j-1.2-api-2.11.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/nomysql/jmeter_plugin/lib/ApacheJMeter_java.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/nomysql/jmeter_plugin/lib/ApacheJMeter_core.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
