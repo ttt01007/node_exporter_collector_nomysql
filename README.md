@@ -1,0 +1,2 @@
+# node_exporter_collector_nomysql
+Jmeter中，setup线程组收集node_exporter数据，解析并存入本地内存中，teardown计算最终结果
