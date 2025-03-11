@@ -202,29 +202,35 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
                 } else if (line.startsWith("node_memory_MemTotal_bytes")) {
                     metrics.memoryTotal = Double.parseDouble(line.split(" ")[1]);
                 } else if (line.startsWith("node_disk_reads_completed_total")) {
-                    metrics.readsCompleted = Double.parseDouble(line.split(" ")[1]);
+                    metrics.readsCompleted += Double.parseDouble(line.split(" ")[1]);
                 } else if (line.startsWith("node_disk_writes_completed_total")) {
-                    metrics.writesCompleted = Double.parseDouble(line.split(" ")[1]);
+                    metrics.writesCompleted += Double.parseDouble(line.split(" ")[1]);
                 } else if (line.startsWith("node_network_receive_bytes_total")) {
-                    metrics.networkReceive = Double.parseDouble(line.split(" ")[1]);
+                    metrics.networkReceive += Double.parseDouble(line.split(" ")[1]);
                 } else if (line.startsWith("node_network_transmit_bytes_total")) {
-                    metrics.networkTransmit = Double.parseDouble(line.split(" ")[1]);
+                    metrics.networkTransmit += Double.parseDouble(line.split(" ")[1]);
                 }
             }
             in.close();
-
-            // 计算 CPU 利用率
-            double usage = 1 - (idleTime / totalTime);
-            metrics.cpuUsage = Math.round(usage * 10000.0) / 100.0;
-
-            // 计算内存利用率
-            metrics.memoryUsage = (1 - (metrics.memoryAvailable / metrics.memoryTotal)) * 100;
-            metrics.memoryUsage = Math.round(metrics.memoryUsage * 100.0) / 100.0;
 
             // 获取该 IP 对应的上次采样指标
             LastSampleMetrics lastMetrics = lastSampleMetricsMap.get(ip);
             double currentTotalIO = metrics.readsCompleted + metrics.writesCompleted;
             double currentTotalNet = metrics.networkReceive + metrics.networkTransmit;
+
+            // 计算 CPU 利用率
+            if (lastMetrics.totalTime != 0) {
+                metrics.cpuUsage = (1 - ((idleTime - lastMetrics.idleTime) / (totalTime - lastMetrics.totalTime))) * 100;
+                metrics.cpuUsage = Math.round(metrics.cpuUsage * 100.0) / 100.0;
+            } else {
+                metrics.cpuUsage = 0;
+            }
+//            double usage = 1 - (idleTime / totalTime);
+//            metrics.cpuUsage = Math.round(usage * 10000.0) / 100.0;
+
+            // 计算内存利用率
+            metrics.memoryUsage = (1 - (metrics.memoryAvailable / metrics.memoryTotal)) * 100;
+            metrics.memoryUsage = Math.round(metrics.memoryUsage * 100.0) / 100.0;
 
             // 计算平均每秒 I/O 次数
             if (lastMetrics.totalio != 0) {
@@ -242,6 +248,8 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
                 metrics.networkBytesPerSecond = 0;
             }
             // 更新该 IP 的上次采样指标
+            lastMetrics.idleTime = idleTime;
+            lastMetrics.totalTime = totalTime;
             lastMetrics.readsCompleted = metrics.readsCompleted;
             lastMetrics.writesCompleted = metrics.writesCompleted;
             lastMetrics.totalio = currentTotalIO;
@@ -269,6 +277,8 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
     }
 
     private static class LastSampleMetrics {
+        double idleTime = 0;
+        double totalTime = 0;
         double totalio = 0;
         double readsCompleted = 0;
         double writesCompleted = 0;

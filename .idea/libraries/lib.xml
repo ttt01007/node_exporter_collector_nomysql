@@ -1,9 +1,7 @@
 <component name="libraryTable">
   <library name="lib">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/nomysql/jmeter_plugin/lib/mysql-connector-java-5.1.30.jar!/" />
       <root url="jar://$PROJECT_DIR$/nomysql/jmeter_plugin/lib/log4j-core-2.11.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/nomysql/jmeter_plugin/lib/mysql-connector-j-9.1.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/nomysql/jmeter_plugin/lib/log4j-slf4j-impl-2.11.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/nomysql/jmeter_plugin/lib/slf4j-api-1.7.25.jar!/" />
       <root url="jar://$PROJECT_DIR$/nomysql/jmeter_plugin/lib/log4j-api-2.11.0.jar!/" />
