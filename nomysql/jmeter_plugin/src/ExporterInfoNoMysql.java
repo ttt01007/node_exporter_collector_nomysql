@@ -10,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,9 +22,9 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
     private static Map<String, BufferedWriter> writers = new HashMap<>();
     private long currentDate;
     private int n = 1;
-    private static Map<String, Map<String, Map<Integer, Double>>> total = new HashMap<>();
+    private static Map<String, Map<String, Map<Integer, Double>>> total = new ConcurrentHashMap<>();
     // 存储每个 IP 对应的上次采样指标
-    private static Map<String, LastSampleMetrics> lastSampleMetricsMap = new HashMap<>();
+    private static Map<String, LastSampleMetrics> lastSampleMetricsMap = new ConcurrentHashMap<>();
 
     @Override
     public Arguments getDefaultParameters() {
@@ -56,6 +57,8 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
                     }
                     // 初始化每个 IP 的上次采样指标
                     lastSampleMetricsMap.put(cleanIp[0], new LastSampleMetrics());
+
+
                 }
 
                 scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -187,6 +190,7 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
             String line;
             double idleTime = 0;
             double totalTime = 0;
+            double localTime = 0;
 
             while ((line = in.readLine()) != null) {
                 if (line.startsWith("node_cpu_seconds_total")) {
@@ -217,16 +221,16 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
             LastSampleMetrics lastMetrics = lastSampleMetricsMap.get(ip);
             double currentTotalIO = metrics.readsCompleted + metrics.writesCompleted;
             double currentTotalNet = metrics.networkReceive + metrics.networkTransmit;
+            //计算间隔时间
+            double useTime = (localTime - lastMetrics.localTime) / 1000;
 
             // 计算 CPU 利用率
             if (lastMetrics.totalTime != 0) {
-                metrics.cpuUsage = (1 - ((idleTime - lastMetrics.idleTime) / (totalTime - lastMetrics.totalTime))) * 100;
+                metrics.cpuUsage = (1 - ((idleTime - lastMetrics.idleTime) / (totalTime - lastMetrics.totalTime))) * 100 ;
                 metrics.cpuUsage = Math.round(metrics.cpuUsage * 100.0) / 100.0;
             } else {
                 metrics.cpuUsage = 0;
             }
-//            double usage = 1 - (idleTime / totalTime);
-//            metrics.cpuUsage = Math.round(usage * 10000.0) / 100.0;
 
             // 计算内存利用率
             metrics.memoryUsage = (1 - (metrics.memoryAvailable / metrics.memoryTotal)) * 100;
@@ -234,7 +238,7 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
 
             // 计算平均每秒 I/O 次数
             if (lastMetrics.totalio != 0) {
-                metrics.ioPerSecond = currentTotalIO - lastMetrics.totalio;
+                metrics.ioPerSecond = (currentTotalIO - lastMetrics.totalio) / useTime;
                 metrics.ioPerSecond = Math.round(metrics.ioPerSecond * 100.0) / 100.0;
             } else {
                 metrics.ioPerSecond = 0;
@@ -242,7 +246,7 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
 
             // 计算每秒流量上传下载的 Mb/s
             if (lastMetrics.totalnet != 0) {
-                metrics.networkBytesPerSecond = (currentTotalNet - lastMetrics.totalnet) / (1024 * 1024);
+                metrics.networkBytesPerSecond = (currentTotalNet - lastMetrics.totalnet) / 128 / useTime;
                 metrics.networkBytesPerSecond = Math.round(metrics.networkBytesPerSecond * 100.0) / 100.0;
             } else {
                 metrics.networkBytesPerSecond = 0;
@@ -277,6 +281,7 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
     }
 
     private static class LastSampleMetrics {
+        double localTime = 0;
         double idleTime = 0;
         double totalTime = 0;
         double totalio = 0;
