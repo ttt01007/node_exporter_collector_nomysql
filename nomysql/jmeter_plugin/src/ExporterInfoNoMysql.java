@@ -30,6 +30,8 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
     public Arguments getDefaultParameters() {
         Arguments arguments = new Arguments();
         arguments.addArgument("ip", "39.107.95.220");
+        arguments.addArgument("resultPath", "../jmeter.log");
+        arguments.addArgument("second", "1");
         return arguments;
     }
 
@@ -46,7 +48,11 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
 
                 for (String ip : ips) {
                     String[] cleanIp = ip.contains(":") ? ip.split(":") : new String[]{ip, "9100"};
-                    File file = new File(currentDate + ".csv");
+                    String resultPath = context.getParameter("resultPath");
+                    if (!resultPath.equals("/")) resultPath = resultPath + "/";
+                    File dir = new File(resultPath);
+                    if (!dir.exists()) dir.mkdirs();
+                    File file = new File(resultPath + cleanIp[0] + "_" + currentDate + ".csv");
                     BufferedWriter writer = writers.get(cleanIp[0]);
 
                     if (writer == null) {
@@ -226,7 +232,7 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
 
             // 计算 CPU 利用率
             if (lastMetrics.totalTime != 0) {
-                metrics.cpuUsage = (1 - ((idleTime - lastMetrics.idleTime) / (totalTime - lastMetrics.totalTime))) * 100 ;
+                metrics.cpuUsage = (1 - ((idleTime - lastMetrics.idleTime) / (totalTime - lastMetrics.totalTime))) * 100;
                 metrics.cpuUsage = Math.round(metrics.cpuUsage * 100.0) / 100.0;
             } else {
                 metrics.cpuUsage = 0;
