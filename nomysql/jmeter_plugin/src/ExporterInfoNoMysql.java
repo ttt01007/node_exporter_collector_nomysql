@@ -30,7 +30,7 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
     public Arguments getDefaultParameters() {
         Arguments arguments = new Arguments();
         arguments.addArgument("ip", "39.107.95.220");
-        arguments.addArgument("resultPath", "../jmeter.log");
+        arguments.addArgument("resultPath(为空时不写入本地)", "../jmeter.log");
         arguments.addArgument("second", "1");
         return arguments;
     }
@@ -55,7 +55,7 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
                     File file = new File(resultPath + cleanIp[0] + "_" + currentDate + ".csv");
                     BufferedWriter writer = writers.get(cleanIp[0]);
 
-                    if (writer == null) {
+                    if (writer == null && !resultPath.isEmpty()) {
                         writer = new BufferedWriter(new FileWriter(file, true));
                         writers.put(cleanIp[0], writer);
                         writer.write("ip,cpu_usage(%),memory_usage(%),io_per_second,network_mb/s");
@@ -107,11 +107,14 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
                             if (ips[0].equals(cleanIp[0]) || ips[0].equals(cleanIp[0] + ":" + cleanIp[1]))
                                 n += 1;
 
-                            synchronized (writer) {
-                                writer.write(line);
-                                writer.newLine();
-                                writer.flush();
+                            if (writer != null) {
+                                synchronized (writer) {
+                                    writer.write(line);
+                                    writer.newLine();
+                                    writer.flush();
+                                }
                             }
+
                         }
                         log.info("指标数据已写入文件");
                     } catch (Exception e) {
@@ -136,11 +139,14 @@ public class ExporterInfoNoMysql extends AbstractJavaSamplerClient {
                     Double m = detail.get("men").values().stream().mapToDouble(Double::doubleValue).average().getAsDouble();
                     Double i = detail.get("io").values().stream().mapToDouble(Double::doubleValue).average().getAsDouble();
                     Double n = detail.get("net").values().stream().mapToDouble(Double::doubleValue).average().getAsDouble();
-                    BufferedWriter writer = writers.get(cleanIp);
-                    writer.newLine();
                     String line = String.format("%s,%.2f,%.2f,%.2f,%.2f,%s", ip, c, m, i, n, "结果");
-                    writer.write(line);
-                    writer.flush();
+                    log.info(line);
+                    BufferedWriter writer = writers.get(ip);
+                    if (writer != null) {
+                        writer.newLine();
+                        writer.write(line);
+                        writer.flush();
+                    }
                 }
 
                 for (BufferedWriter writer : writers.values()) {
